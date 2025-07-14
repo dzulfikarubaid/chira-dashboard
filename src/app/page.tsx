@@ -34,6 +34,7 @@ const DashboardLayout = () => {
   const [lastFirebaseTimestamp, setLastFirebaseTimestamp] = useState<number | null>(null);
   const [timeFilter, setTimeFilter] = useState('today');
   const chartRef = useRef<any>(null);
+  const [prevChiliPicked, setPrevChiliPicked] = useState<number | null>(null);
   const statusItems = [
     { id: 'OFFLINE', label: 'Offline', icon: <PiToggleLeft size={25} /> },
     { id: 'IDLE', label: 'Detect Object', icon: <PiSecurityCamera size={25} /> },
@@ -50,6 +51,7 @@ const DashboardLayout = () => {
       const data = snapshot.val();
       if (data && data.timestamp) {
         setLastFirebaseTimestamp(data.timestamp);
+        //  console.log('Waktu Status', Date.now())
         setRobotStatus(prevStatus => {
           const newDetectedObjectCm = {
             x: data.detected_object_cm?.x ?? prevStatus.detected_object_cm.x,
@@ -67,7 +69,7 @@ const DashboardLayout = () => {
           };
         });
         setIsOnline(true);
-        console.log("ROBOT STATUS DATA", data);
+        // console.log("ROBOT STATUS DATA", data);
       } else {
         setIsOnline(false);
         setRobotStatus((prevStatus:any) => ({
@@ -89,13 +91,21 @@ const DashboardLayout = () => {
     const unsubscribeRobotStatus = onValue(robotStatusRef, handleRobotStatusData, onRobotStatusError);
     const statisticsRef = ref(database, 'statistics');
     const handleStatisticsData = (snapshot: any) => {
-      const data = snapshot.val();
-      if (data) {
-        setTotalChiliPicked(data.chili_picked_count ?? 0);
-        setTotalPickingAttempts(data.total_picking_attempts ?? 0);
-        console.log("STATISTICS DATA", data);
-      }
-    };
+  const data = snapshot.val();
+  if (data) {
+    const pickedCount = data.chili_picked_count ?? 0;
+    const attemptCount = data.total_picking_attempts ?? 0;
+
+    setTotalChiliPicked(pickedCount);
+    setTotalPickingAttempts(attemptCount);
+
+    if (prevChiliPicked !== null && pickedCount !== prevChiliPicked) {
+      console.log('Waktu Count:', Date.now());
+    }
+
+    setPrevChiliPicked(pickedCount);
+  }
+};
     const onStatisticsError = (error: any) => {
       console.error("Firebase error (statistics):", error);
     };
